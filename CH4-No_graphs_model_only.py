@@ -1,15 +1,17 @@
 # Import needed items
-import tensorflow as tf
-from tensorflow import keras
+
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+except:
+    import tflite_runtime.interpreter as tflite
+
 import pandas as pd
+
 import numpy as np
 import time
 import os
 
-my_devices = tf.config.experimental.list_physical_devices(device_type='CPU')
-tf.config.experimental.set_visible_devices(devices= my_devices, device_type='CPU')
-
-# Import the three different datasets and combine
 data_1 = pd.read_csv(os.path.join('data', 'CH4_N2O.txt'), sep=",")
 data_1.columns = ['CH4', 'N2O', 'NO', 'NH3', 'CH4_NG_CAL', 'V0', 'V1', 'time']
 
@@ -128,7 +130,7 @@ threshold = 0
 sensor_train, sensor_test = divide_data(percent, data_norm)
 class_train, class_test = divide_data(percent, class_column)
 
-model = keras.models.load_model(os.path.join('models', 'ch4_model'))
+# model = keras.models.load_model(os.path.join('models', 'ch4_model'))
 
 test_dataset = []
 true_result = class_test.values
@@ -136,7 +138,7 @@ true_result = class_test.values
 for test_data_point in sensor_test.values:
     test_dataset.append(np.reshape(test_data_point, (-1,2)).astype(np.float32))
 
-interpreter = tf.lite.Interpreter(model_path=os.path.join('models', 'ch4_model.tflite'))
+interpreter = tflite.Interpreter(model_path=os.path.join('models', 'ch4_model.tflite'))
 interpreter.allocate_tensors()
 
 output_details = interpreter.get_output_details()
@@ -147,7 +149,7 @@ for ind, test_point in enumerate(test_dataset):
     interpreter.set_tensor(1, test_point)
     interpreter.invoke()
     output_data = np.argmax(interpreter.get_tensor(output_details[0]['index']))
-    model.predict(test_point)
+  #  model.predict(test_point)
 
 # stop timing
 end = time.time()
