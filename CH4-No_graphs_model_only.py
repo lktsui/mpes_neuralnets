@@ -164,7 +164,12 @@ for i in range(0,1000):
 # stop timing
 end = time.time()
 
-print('\n Testing took ' + "%.2f" % (end - start), 'seconds')
+data_size = 1000*(len(test_dataset)+len(train_dataset))
+
+delta_time = end-start
+time_per_pt = delta_time/data_size
+
+print('\n Testing took ' + "%.2f " % (delta_time), 'seconds. (%0.2e s per point)'%time_per_pt)
 
 
 
