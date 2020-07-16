@@ -3,6 +3,8 @@
 try:
     import tensorflow as tf
     from tensorflow import keras
+    tflite = tf.lite
+
 except:
     import tflite_runtime.interpreter as tflite
 
@@ -133,10 +135,14 @@ class_train, class_test = divide_data(percent, class_column)
 # model = keras.models.load_model(os.path.join('models', 'ch4_model'))
 
 test_dataset = []
+train_dataset = []
 true_result = class_test.values
 
 for test_data_point in sensor_test.values:
     test_dataset.append(np.reshape(test_data_point, (-1,2)).astype(np.float32))
+
+for train_data_point in sensor_train.values:
+    train_dataset.append(np.reshape(train_data_point, (-1,2)).astype(np.float32))
 
 interpreter = tflite.Interpreter(model_path=os.path.join('models', 'ch4_model.tflite'))
 interpreter.allocate_tensors()
@@ -144,19 +150,19 @@ interpreter.allocate_tensors()
 output_details = interpreter.get_output_details()
 
 start = time.time()
+for i in range(0,1000):
+    for ind, test_point in enumerate(train_dataset):
+        interpreter.set_tensor(1, test_point)
+        interpreter.invoke()
+        output_data = np.argmax(interpreter.get_tensor(output_details[0]['index']))
 
-for ind, test_point in enumerate(test_dataset):
-    interpreter.set_tensor(1, test_point)
-    interpreter.invoke()
-    output_data = np.argmax(interpreter.get_tensor(output_details[0]['index']))
-  #  model.predict(test_point)
+    for ind, test_point in enumerate(test_dataset):
+        interpreter.set_tensor(1, test_point)
+        interpreter.invoke()
+        output_data = np.argmax(interpreter.get_tensor(output_details[0]['index']))
 
 # stop timing
 end = time.time()
-
-# pickle the above dataframes for later data analysis during data collection
-# tpickle.to_pickle("./60_nodes2_train_10.pkl")
-# pickle.to_pickle("./60_nodes2_test_10.pkl")
 
 print('\n Testing took ' + "%.2f" % (end - start), 'seconds')
 
